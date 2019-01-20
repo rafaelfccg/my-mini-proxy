@@ -3,7 +3,7 @@ RELEASE="release/$VERSION"
 
 make build
 
-docker build -f manifests/Dockerfile -t us.gcr.io/bitja-193417/simple-proxy:$VERSION .
+docker build -f Dockerfile -t us.gcr.io/bitja-193417/simple-proxy:$VERSION .
 docker push us.gcr.io/bitja-193417/simple-proxy:$VERSION
 
 git checkout -b $RELEASE
