@@ -7,21 +7,34 @@ import (
 	"github.com/labstack/echo/middleware"
 )
 
+const (
+	binanceUrl  = "https://www.binance.com/"
+	binancePath = "/binance/"
+
+	bitblueUrl  = "https://www.bitblue.com/"
+	bitbluePath = "/bitblue/"
+)
+
 func main() {
 	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
 	// Setup proxy
-	binanceUrl := "https://www.binance.com"
+	e.Any(binancePath+"*", makeHandler(binanceUrl, binancePath))
+	e.Any(bitbluePath+"*", makeHandler(bitblueUrl, bitbluePath))
+	e.Any("/*", makeHandler(binanceUrl, "/"))
+	e.Logger.Fatal(e.Start(":8080"))
+}
 
-	// e.Use(middleware.Proxy(middleware.NewRoundRobinBalancer(targets)))
-	e.Any("/*", func(c echo.Context) error {
+func makeHandler(url, path string) echo.HandlerFunc {
+	return func(c echo.Context) error {
 		transport := &http.Transport{}
 		client := &http.Client{
 			Transport: transport,
 		}
-		println(c.Request().RequestURI)
-		req, err := http.NewRequest(c.Request().Method, binanceUrl+c.Request().RequestURI, nil)
+		requestUri := c.Request().RequestURI[len(path):]
+		println(url + requestUri)
+		req, err := http.NewRequest(c.Request().Method, url+requestUri, nil)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, "Could not create request!")
 		}
@@ -42,6 +55,5 @@ func main() {
 		}
 
 		return c.Stream(response.StatusCode, response.Header.Get(echo.HeaderContentType), response.Body)
-	})
-	e.Logger.Fatal(e.Start(":8080"))
+	}
 }
